@@ -1,25 +1,8 @@
-**/venv/
-**/.venv/
-**/comprobantes/
-**/__pycache__/
-**/node_modules/
-*.pyc
-*.env*
-!*.env.example
-*.log
-*.pyo
-*.pyd
-*pyrightconfig.json
-*python-version
-
-client-react/build/
-client-react/dist/
-
-/Output/
-*/build/
-*/dist/
-*.db
-
-# Generado por el pipeline de release (no commitear)
-server-flask/version.txt
-
+# .NET
+**/bin/
+**/obj/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates

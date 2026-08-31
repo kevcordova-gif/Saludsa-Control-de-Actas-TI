@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="SaludsaActas.Application/SaludsaActas.Application.csproj" />
+  <Project Path="SaludsaActas.CrossCutting/SaludsaActas.CrossCutting.csproj" />
+  <Project Path="SaludsaActas.Domain/SaludsaActas.Domain.csproj" />
+  <Project Path="SaludsaActas.Infrastructure/SaludsaActas.Infrastructure.csproj" />
+  <Project Path="SaludsaActas.WebApi/SaludsaActas.WebApi.csproj" />
+</Solution>
