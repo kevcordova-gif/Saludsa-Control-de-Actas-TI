@@ -1,3 +1,7 @@
+using SaludsaActas.Application.Interfaces;
+using SaludsaActas.Application.Services;
+using SaludsaActas.Domain.Interfaces;
+using SaludsaActas.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,6 +22,12 @@ public static class DependencyInjectionExtensions
 
         services.AddDbContext<AppDbContext>(options =>
             options.UseSqlServer(connectionString));
+
+        services.AddScoped<IEmpleadoRepository, EmpleadoRepository>();
+        services.AddScoped<IActaRepository, ActaRepository>();
+
+        services.AddScoped<IEmpleadoService, EmpleadoService>();
+        services.AddScoped<IActaService, ActaService>();
 
         return services;
     }
