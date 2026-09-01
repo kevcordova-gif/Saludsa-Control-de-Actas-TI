@@ -7,4 +7,6 @@ public interface IActaService
     Task<ActaDto?> GetByIdAsync(string id);
 
     Task<List<ActaDto>> GetAllAsync();
+
+    Task<ActaDto> CreateAsync(CreateActaDto dto);
 }

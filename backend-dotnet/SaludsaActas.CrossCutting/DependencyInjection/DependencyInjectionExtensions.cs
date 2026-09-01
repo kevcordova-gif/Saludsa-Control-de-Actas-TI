@@ -26,13 +26,18 @@ public static class DependencyInjectionExtensions
         services.AddDbContext<AppDbContext>(options =>
             options.UseSqlServer(connectionString));
 
+        // Repositories
         services.AddScoped<IEmpleadoRepository, EmpleadoRepository>();
         services.AddScoped<IActaRepository, ActaRepository>();
+        services.AddScoped<IActivoRepository, ActivoRepository>();
 
+        // Services
         services.AddScoped<IEmpleadoService, EmpleadoService>();
         services.AddScoped<IActaService, ActaService>();
 
+        // Validators
         services.AddScoped<IValidator<CreateEmpleadoDto>, CreateEmpleadoDtoValidator>();
+        services.AddScoped<IValidator<CreateActaDto>, CreateActaDtoValidator>();
 
         return services;
     }

@@ -8,9 +8,11 @@ public interface IActaRepository
 
     Task<List<Acta>> GetAllAsync();
 
-    Task AddAsync(Acta acta);
+    Task<string?> GetLastIdForDateAsync(DateTime date);
 
     Task<bool> ExistsAsync(string id);
+
+    Task AddAsync(Acta acta);
 
     Task SaveChangesAsync();
 }

@@ -1,4 +1,6 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
+using SaludsaActas.Application.DTOs;
 using SaludsaActas.Application.Interfaces;
 
 namespace SaludsaActas.WebApi.Controllers;
@@ -36,5 +38,39 @@ public class ActasController : ControllerBase
         }
 
         return Ok(acta);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] CreateActaDto dto)
+    {
+        try
+        {
+            var acta = await _actaService.CreateAsync(dto);
+
+            return CreatedAtAction(
+                nameof(GetById),
+                new { id = acta.Id },
+                acta
+            );
+        }
+        catch (ValidationException ex)
+        {
+            return BadRequest(new
+            {
+                message = "Los datos enviados no son válidos.",
+                errors = ex.Errors.Select(error => new
+                {
+                    field = error.PropertyName,
+                    message = error.ErrorMessage
+                })
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(new
+            {
+                message = ex.Message
+            });
+        }
     }
 }

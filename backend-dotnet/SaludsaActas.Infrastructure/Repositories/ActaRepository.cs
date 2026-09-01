@@ -33,15 +33,26 @@ public class ActaRepository : IActaRepository
             .ToListAsync();
     }
 
-    public async Task AddAsync(Acta acta)
+    public async Task<string?> GetLastIdForDateAsync(DateTime date)
     {
-        await _context.Actas.AddAsync(acta);
+        var prefix = $"ACT-{date:yyyyMMdd}-";
+
+        return await _context.Actas
+            .Where(a => a.Id.StartsWith(prefix))
+            .OrderByDescending(a => a.Id)
+            .Select(a => a.Id)
+            .FirstOrDefaultAsync();
     }
 
     public async Task<bool> ExistsAsync(string id)
     {
         return await _context.Actas
             .AnyAsync(a => a.Id == id);
+    }
+
+    public async Task AddAsync(Acta acta)
+    {
+        await _context.Actas.AddAsync(acta);
     }
 
     public async Task SaveChangesAsync()
