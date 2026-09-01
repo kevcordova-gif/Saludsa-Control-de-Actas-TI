@@ -30,10 +30,12 @@ public static class DependencyInjectionExtensions
         services.AddScoped<IEmpleadoRepository, EmpleadoRepository>();
         services.AddScoped<IActaRepository, ActaRepository>();
         services.AddScoped<IActivoRepository, ActivoRepository>();
+        services.AddScoped<IActaDraftRepository, ActaDraftRepository>();
 
         // Services
         services.AddScoped<IEmpleadoService, EmpleadoService>();
         services.AddScoped<IActaService, ActaService>();
+        services.AddScoped<IActaDraftService, ActaDraftService>();
 
         // Validators
         services.AddScoped<IValidator<CreateEmpleadoDto>, CreateEmpleadoDtoValidator>();
