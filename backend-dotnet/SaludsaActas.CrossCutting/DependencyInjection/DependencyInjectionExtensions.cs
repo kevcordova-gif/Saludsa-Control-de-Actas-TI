@@ -1,11 +1,14 @@
-using SaludsaActas.Application.Interfaces;
-using SaludsaActas.Application.Services;
-using SaludsaActas.Domain.Interfaces;
-using SaludsaActas.Infrastructure.Repositories;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SaludsaActas.Application.DTOs;
+using SaludsaActas.Application.Interfaces;
+using SaludsaActas.Application.Services;
+using SaludsaActas.Application.Validators;
+using SaludsaActas.Domain.Interfaces;
 using SaludsaActas.Infrastructure.Data;
+using SaludsaActas.Infrastructure.Repositories;
 
 namespace SaludsaActas.CrossCutting.DependencyInjection;
 
@@ -28,6 +31,8 @@ public static class DependencyInjectionExtensions
 
         services.AddScoped<IEmpleadoService, EmpleadoService>();
         services.AddScoped<IActaService, ActaService>();
+
+        services.AddScoped<IValidator<CreateEmpleadoDto>, CreateEmpleadoDtoValidator>();
 
         return services;
     }
