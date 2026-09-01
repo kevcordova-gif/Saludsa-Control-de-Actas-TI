@@ -73,4 +73,22 @@ public class ActasController : ControllerBase
             });
         }
     }
+
+    [HttpPatch("{id}/firmar")]
+    public async Task<IActionResult> MarcarComoFirmada(string id)
+    {
+        try
+        {
+            var acta = await _actaService.MarcarComoFirmadaAsync(id);
+
+            return Ok(acta);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(new
+            {
+                message = ex.Message
+            });
+        }
+    }
 }

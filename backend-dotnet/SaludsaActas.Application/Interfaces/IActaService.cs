@@ -9,4 +9,6 @@ public interface IActaService
     Task<List<ActaDto>> GetAllAsync();
 
     Task<ActaDto> CreateAsync(CreateActaDto dto);
+
+    Task<ActaDto> MarcarComoFirmadaAsync(string id);
 }

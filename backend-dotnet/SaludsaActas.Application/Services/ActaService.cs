@@ -77,9 +77,6 @@ public class ActaService : IActaService
             SincronizadoSaludsa = false,
             EmpleadoId = empleado.Id,
             Empleado = empleado,
-
-            // Los activos corresponden a laptops.
-            // Si existe al menos una, el acta requiere pagaré.
             TienePagare = dto.Activos.Count > 0
         };
 
@@ -226,6 +223,23 @@ public class ActaService : IActaService
         }
 
         await _actaRepository.AddAsync(acta);
+        await _actaRepository.SaveChangesAsync();
+
+        return MapToDto(acta);
+    }
+
+    public async Task<ActaDto> MarcarComoFirmadaAsync(string id)
+    {
+        var acta = await _actaRepository.GetByIdAsync(id);
+
+        if (acta is null)
+        {
+            throw new InvalidOperationException(
+                "El acta no existe.");
+        }
+
+        acta.Estado = "FIRMADA";
+
         await _actaRepository.SaveChangesAsync();
 
         return MapToDto(acta);
