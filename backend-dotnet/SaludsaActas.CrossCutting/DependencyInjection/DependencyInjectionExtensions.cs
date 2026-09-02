@@ -7,6 +7,7 @@ using SaludsaActas.Application.Interfaces;
 using SaludsaActas.Application.Services;
 using SaludsaActas.Application.Validators;
 using SaludsaActas.Domain.Interfaces;
+using SaludsaActas.Infrastructure.ActiveDirectory;
 using SaludsaActas.Infrastructure.Data;
 using SaludsaActas.Infrastructure.Documents;
 using SaludsaActas.Infrastructure.Repositories;
@@ -32,6 +33,10 @@ public static class DependencyInjectionExtensions
         services.Configure<DocumentOptions>(
             configuration.GetSection("Documents"));
 
+        // Configuración de Active Directory
+        services.Configure<ActiveDirectoryOptions>(
+            configuration.GetSection("ActiveDirectory"));
+
         // Repositories
         services.AddScoped<IEmpleadoRepository, EmpleadoRepository>();
         services.AddScoped<IActaRepository, ActaRepository>();
@@ -43,6 +48,11 @@ public static class DependencyInjectionExtensions
         services.AddScoped<IActaService, ActaService>();
         services.AddScoped<IActaDraftService, ActaDraftService>();
         services.AddScoped<IDocumentService, DocumentService>();
+
+        // Active Directory
+        services.AddScoped<
+            IActiveDirectoryService,
+            ActiveDirectoryService>();
 
         // Validators
         services.AddScoped<
