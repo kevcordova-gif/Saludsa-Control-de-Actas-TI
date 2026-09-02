@@ -10,10 +10,14 @@ namespace SaludsaActas.WebApi.Controllers;
 public class ActasController : ControllerBase
 {
     private readonly IActaService _actaService;
+    private readonly IDocumentService _documentService;
 
-    public ActasController(IActaService actaService)
+    public ActasController(
+        IActaService actaService,
+        IDocumentService documentService)
     {
         _actaService = actaService;
+        _documentService = documentService;
     }
 
     [HttpGet]
@@ -89,6 +93,46 @@ public class ActasController : ControllerBase
             {
                 message = ex.Message
             });
+        }
+    }
+
+    [HttpGet("{id}/documents/{documentType}/word")]
+    public async Task<IActionResult> DownloadWord(
+        string id,
+        string documentType)
+    {
+        try
+        {
+            var document =
+                await _documentService.GenerateWordAsync(
+                    id,
+                    documentType);
+
+            return File(
+                document.Content,
+                document.ContentType,
+                document.FileName);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(new
+            {
+                message = ex.Message
+            });
+        }
+        catch (NotSupportedException ex)
+        {
+            return BadRequest(new
+            {
+                message = ex.Message
+            });
+        }
+        catch (FileNotFoundException)
+        {
+            return Problem(
+                statusCode: StatusCodes.Status500InternalServerError,
+                title: "No se pudo generar el documento.",
+                detail: "La plantilla Word requerida no está disponible.");
         }
     }
 }
