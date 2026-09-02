@@ -6,5 +6,5 @@ public class DocumentOptions
 
     public string OutputDirectory { get; set; } = string.Empty;
 
-    public string LibreOfficePath { get; set; } = string.Empty;
+    public string LegalRepresentativeName { get; set; } = string.Empty;
 }

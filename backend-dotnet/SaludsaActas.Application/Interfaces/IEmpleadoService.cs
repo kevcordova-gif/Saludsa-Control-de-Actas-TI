@@ -9,4 +9,6 @@ public interface IEmpleadoService
     Task<EmpleadoDto?> GetByUsernameAsync(string username);
 
     Task<EmpleadoDto> CreateAsync(CreateEmpleadoDto dto);
+
+    Task<EmpleadoDto> SyncFromActiveDirectoryAsync(string username);
 }

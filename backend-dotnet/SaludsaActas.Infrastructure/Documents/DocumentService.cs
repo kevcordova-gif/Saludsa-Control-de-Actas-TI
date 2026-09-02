@@ -105,18 +105,22 @@ public class DocumentService : IDocumentService
                 ?? throw new InvalidOperationException(
                     "La plantilla Word no contiene contenido.");
 
-            // Generar las filas de equipos
+            // Generar filas de equipos
             ProcessEquipmentTable(
                 body,
                 equipos);
 
             var now = DateTime.Now;
 
+            // Representante legal desde appsettings.json
             var legalRepresentativeName =
-                Environment.GetEnvironmentVariable(
-                    "LEGAL_REPRESENTATIVE_NAME")
-                ?? "[REPRESENTANTE LEGAL NO CONFIGURADO]";
+                string.IsNullOrWhiteSpace(
+                    _options.LegalRepresentativeName)
+                    ? "[REPRESENTANTE LEGAL NO CONFIGURADO]"
+                    : _options.LegalRepresentativeName.Trim();
 
+            // La identificación todavía queda fuera del código
+            // hasta que tengamos el dato verificado.
             var legalRepresentativeId =
                 Environment.GetEnvironmentVariable(
                     "LEGAL_REPRESENTATIVE_ID")

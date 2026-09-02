@@ -9,48 +9,65 @@ namespace SaludsaActas.Application.Services;
 public class EmpleadoService : IEmpleadoService
 {
     private readonly IEmpleadoRepository _empleadoRepository;
+    private readonly IActiveDirectoryService _activeDirectoryService;
     private readonly IValidator<CreateEmpleadoDto> _validator;
 
     public EmpleadoService(
         IEmpleadoRepository empleadoRepository,
+        IActiveDirectoryService activeDirectoryService,
         IValidator<CreateEmpleadoDto> validator)
     {
         _empleadoRepository = empleadoRepository;
+        _activeDirectoryService = activeDirectoryService;
         _validator = validator;
     }
 
     public async Task<EmpleadoDto?> GetByIdAsync(int id)
     {
-        var empleado = await _empleadoRepository.GetByIdAsync(id);
+        var empleado =
+            await _empleadoRepository.GetByIdAsync(id);
 
         if (empleado is null)
+        {
             return null;
+        }
 
         return MapToDto(empleado);
     }
 
-    public async Task<EmpleadoDto?> GetByUsernameAsync(string username)
+    public async Task<EmpleadoDto?> GetByUsernameAsync(
+        string username)
     {
-        var empleado = await _empleadoRepository.GetByUsernameAsync(username);
+        var empleado =
+            await _empleadoRepository
+                .GetByUsernameAsync(username);
 
         if (empleado is null)
+        {
             return null;
+        }
 
         return MapToDto(empleado);
     }
 
-    public async Task<EmpleadoDto> CreateAsync(CreateEmpleadoDto dto)
+    public async Task<EmpleadoDto> CreateAsync(
+        CreateEmpleadoDto dto)
     {
-        var validationResult = await _validator.ValidateAsync(dto);
+        var validationResult =
+            await _validator.ValidateAsync(dto);
 
         if (!validationResult.IsValid)
         {
-            throw new ValidationException(validationResult.Errors);
+            throw new ValidationException(
+                validationResult.Errors);
         }
 
-        var username = dto.Username.Trim();
+        var username =
+            dto.Username.Trim();
 
-        var exists = await _empleadoRepository.ExistsByUsernameAsync(username);
+        var exists =
+            await _empleadoRepository
+                .ExistsByUsernameAsync(username);
 
         if (exists)
         {
@@ -72,7 +89,70 @@ public class EmpleadoService : IEmpleadoService
         return MapToDto(empleado);
     }
 
-    private static EmpleadoDto MapToDto(Empleado empleado)
+    public async Task<EmpleadoDto> SyncFromActiveDirectoryAsync(
+        string username)
+    {
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            throw new ArgumentException(
+                "El username es obligatorio.",
+                nameof(username));
+        }
+
+        var adEmployee =
+            await _activeDirectoryService
+                .GetByUsernameAsync(username.Trim());
+
+        if (adEmployee is null)
+        {
+            throw new InvalidOperationException(
+                "El empleado no existe en Active Directory.");
+        }
+
+        var empleado =
+            await _empleadoRepository
+                .GetByUsernameAsync(adEmployee.Username);
+
+        if (empleado is null)
+        {
+            empleado = new Empleado
+            {
+                Username =
+                    adEmployee.Username.Trim(),
+
+                FullName =
+                    adEmployee.FullName.Trim(),
+
+                NationalId =
+                    adEmployee.NationalId.Trim(),
+
+                City =
+                    adEmployee.City.Trim()
+            };
+
+            await _empleadoRepository
+                .AddAsync(empleado);
+        }
+        else
+        {
+            empleado.FullName =
+                adEmployee.FullName.Trim();
+
+            empleado.NationalId =
+                adEmployee.NationalId.Trim();
+
+            empleado.City =
+                adEmployee.City.Trim();
+        }
+
+        await _empleadoRepository
+            .SaveChangesAsync();
+
+        return MapToDto(empleado);
+    }
+
+    private static EmpleadoDto MapToDto(
+        Empleado empleado)
     {
         return new EmpleadoDto
         {

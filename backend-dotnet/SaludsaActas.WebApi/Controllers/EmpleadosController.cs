@@ -11,7 +11,8 @@ public class EmpleadosController : ControllerBase
 {
     private readonly IEmpleadoService _empleadoService;
 
-    public EmpleadosController(IEmpleadoService empleadoService)
+    public EmpleadosController(
+        IEmpleadoService empleadoService)
     {
         _empleadoService = empleadoService;
     }
@@ -19,7 +20,8 @@ public class EmpleadosController : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {
-        var empleado = await _empleadoService.GetByIdAsync(id);
+        var empleado =
+            await _empleadoService.GetByIdAsync(id);
 
         if (empleado is null)
         {
@@ -33,9 +35,12 @@ public class EmpleadosController : ControllerBase
     }
 
     [HttpGet("username/{username}")]
-    public async Task<IActionResult> GetByUsername(string username)
+    public async Task<IActionResult> GetByUsername(
+        string username)
     {
-        var empleado = await _empleadoService.GetByUsernameAsync(username);
+        var empleado =
+            await _empleadoService
+                .GetByUsernameAsync(username);
 
         if (empleado is null)
         {
@@ -49,28 +54,36 @@ public class EmpleadosController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateEmpleadoDto dto)
+    public async Task<IActionResult> Create(
+        [FromBody] CreateEmpleadoDto dto)
     {
         try
         {
-            var empleado = await _empleadoService.CreateAsync(dto);
+            var empleado =
+                await _empleadoService
+                    .CreateAsync(dto);
 
             return CreatedAtAction(
                 nameof(GetById),
                 new { id = empleado.Id },
-                empleado
-            );
+                empleado);
         }
         catch (ValidationException ex)
         {
             return BadRequest(new
             {
-                message = "Los datos enviados no son válidos.",
-                errors = ex.Errors.Select(error => new
-                {
-                    field = error.PropertyName,
-                    message = error.ErrorMessage
-                })
+                message =
+                    "Los datos enviados no son válidos.",
+
+                errors =
+                    ex.Errors.Select(error => new
+                    {
+                        field =
+                            error.PropertyName,
+
+                        message =
+                            error.ErrorMessage
+                    })
             });
         }
         catch (InvalidOperationException ex)
@@ -79,6 +92,63 @@ public class EmpleadosController : ControllerBase
             {
                 message = ex.Message
             });
+        }
+    }
+
+    [HttpPost("sync-ad/{username}")]
+    public async Task<IActionResult> SyncFromActiveDirectory(
+        string username)
+    {
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            return BadRequest(new
+            {
+                message =
+                    "Debe indicar un username."
+            });
+        }
+
+        try
+        {
+            var empleado =
+                await _empleadoService
+                    .SyncFromActiveDirectoryAsync(
+                        username);
+
+            return Ok(new
+            {
+                message =
+                    "Empleado sincronizado correctamente.",
+
+                empleado
+            });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new
+            {
+                message = ex.Message
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(new
+            {
+                message = ex.Message
+            });
+        }
+        catch (Exception)
+        {
+            return Problem(
+                statusCode:
+                    StatusCodes
+                        .Status500InternalServerError,
+
+                title:
+                    "No se pudo sincronizar el empleado.",
+
+                detail:
+                    "Ocurrió un error al consultar o guardar los datos del empleado.");
         }
     }
 }
