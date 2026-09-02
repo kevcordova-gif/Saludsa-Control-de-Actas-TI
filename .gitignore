@@ -6,3 +6,6 @@
 *.suo
 *.userosscache
 *.sln.docstates
+# Documentos generados por la aplicación
+backend-dotnet/SaludsaActas.WebApi/Documents/Generated/*
+!backend-dotnet/SaludsaActas.WebApi/Documents/Generated/.gitkeep
