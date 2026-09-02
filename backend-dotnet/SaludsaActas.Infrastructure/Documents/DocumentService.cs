@@ -40,15 +40,22 @@ public class DocumentService : IDocumentService
                 "El acta no existe.");
         }
 
-        if (!documentType.Equals(
+        if (documentType.Equals(
                 "acta",
                 StringComparison.OrdinalIgnoreCase))
         {
-            throw new NotSupportedException(
-                "Por el momento solo está habilitada la generación del acta Word.");
+            return GenerateActaWord(acta);
         }
 
-        return GenerateActaWord(acta);
+        if (documentType.Equals(
+                "pagare",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return GeneratePagareWord(acta);
+        }
+
+        throw new NotSupportedException(
+            "El tipo de documento solicitado no está soportado.");
     }
 
     private GeneratedDocumentDto GenerateActaWord(Acta acta)
@@ -86,7 +93,8 @@ public class DocumentService : IDocumentService
 
         memoryStream.Position = 0;
 
-        using (var document = WordprocessingDocument.Open(
+        using (var document =
+               WordprocessingDocument.Open(
                    memoryStream,
                    true))
         {
@@ -105,26 +113,17 @@ public class DocumentService : IDocumentService
                 ?? throw new InvalidOperationException(
                     "La plantilla Word no contiene contenido.");
 
-            // Generar filas de equipos
             ProcessEquipmentTable(
                 body,
                 equipos);
 
             var now = DateTime.Now;
 
-            // Representante legal desde appsettings.json
             var legalRepresentativeName =
-                string.IsNullOrWhiteSpace(
-                    _options.LegalRepresentativeName)
-                    ? "[REPRESENTANTE LEGAL NO CONFIGURADO]"
-                    : _options.LegalRepresentativeName.Trim();
+                GetLegalRepresentativeName();
 
-            // La identificación todavía queda fuera del código
-            // hasta que tengamos el dato verificado.
             var legalRepresentativeId =
-                Environment.GetEnvironmentVariable(
-                    "LEGAL_REPRESENTATIVE_ID")
-                ?? "[CÉDULA NO CONFIGURADA]";
+                GetLegalRepresentativeId();
 
             ReplacePlaceholder(
                 body,
@@ -171,6 +170,183 @@ public class DocumentService : IDocumentService
             $"{SanitizeFileName(mainEquipment.EquipmentType)}_" +
             $"{SanitizeFileName(mainEquipment.SerialNumber)}.docx";
 
+        SaveGeneratedDocument(
+            fileName,
+            generatedBytes);
+
+        return BuildGeneratedDocument(
+            generatedBytes,
+            fileName);
+    }
+
+    private GeneratedDocumentDto GeneratePagareWord(
+        Acta acta)
+    {
+        if (!acta.TienePagare ||
+            acta.Activos.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "El acta no requiere pagaré porque no contiene una laptop.");
+        }
+
+        var templatePath = Path.Combine(
+            _environment.ContentRootPath,
+            _options.TemplatesDirectory,
+            "pagare_template.docx");
+
+        if (!File.Exists(templatePath))
+        {
+            throw new FileNotFoundException(
+                "No se encontró la plantilla pagare_template.docx.",
+                templatePath);
+        }
+
+        var laptop =
+            acta.Activos.First();
+
+        var amount =
+            Convert.ToInt32(
+                decimal.Round(
+                    laptop.PurchaseCost,
+                    0,
+                    MidpointRounding.AwayFromZero));
+
+        var numericalAmount =
+            amount.ToString(
+                CultureInfo.InvariantCulture);
+
+        var textAmount =
+            SpanishNumberConverter
+                .ConvertToWords(amount);
+
+        var now =
+            DateTime.Now;
+
+        var legalRepresentativeName =
+            GetLegalRepresentativeName();
+
+        var legalRepresentativeId =
+            GetLegalRepresentativeId();
+
+        var templateBytes =
+            File.ReadAllBytes(templatePath);
+
+        using var memoryStream =
+            new MemoryStream();
+
+        memoryStream.Write(
+            templateBytes,
+            0,
+            templateBytes.Length);
+
+        memoryStream.Position = 0;
+
+        using (var document =
+               WordprocessingDocument.Open(
+                   memoryStream,
+                   true))
+        {
+            var mainPart =
+                document.MainDocumentPart
+                ?? throw new InvalidOperationException(
+                    "La plantilla del pagaré no contiene un MainDocumentPart.");
+
+            var mainDocument =
+                mainPart.Document
+                ?? throw new InvalidOperationException(
+                    "La plantilla del pagaré no contiene un documento principal.");
+
+            var body =
+                mainDocument.Body
+                ?? throw new InvalidOperationException(
+                    "La plantilla del pagaré no contiene contenido.");
+
+            ReplacePlaceholder(
+                body,
+                "full_name",
+                acta.Empleado.FullName);
+
+            ReplacePlaceholder(
+                body,
+                "national_id",
+                acta.Empleado.NationalId);
+
+            ReplacePlaceholder(
+                body,
+                "city",
+                FormatCity(acta.Empleado.City));
+
+            ReplacePlaceholder(
+                body,
+                "actual_date",
+                FormatDate(now));
+
+            ReplacePlaceholder(
+                body,
+                "actual_date_header",
+                FormatPagareHeaderDate(now));
+
+            ReplacePlaceholder(
+                body,
+                "numerical_amount",
+                numericalAmount);
+
+            ReplacePlaceholder(
+                body,
+                "text_amount",
+                textAmount);
+
+            ReplacePlaceholder(
+                body,
+                "legal_representative_name",
+                legalRepresentativeName);
+
+            ReplacePlaceholder(
+                body,
+                "legal_representative_id",
+                legalRepresentativeId);
+
+            mainDocument.Save();
+        }
+
+        var generatedBytes =
+            memoryStream.ToArray();
+
+        var fileName =
+            $"PAGARE_" +
+            $"{SanitizeFileName(acta.Empleado.Username)}_" +
+            $"Laptop_" +
+            $"{SanitizeFileName(laptop.SerialNumber)}.docx";
+
+        SaveGeneratedDocument(
+            fileName,
+            generatedBytes);
+
+        return BuildGeneratedDocument(
+            generatedBytes,
+            fileName);
+    }
+
+    private string GetLegalRepresentativeName()
+    {
+        return string.IsNullOrWhiteSpace(
+            _options.LegalRepresentativeName)
+            ? "[REPRESENTANTE LEGAL NO CONFIGURADO]"
+            : _options.LegalRepresentativeName.Trim();
+    }
+
+    private string GetLegalRepresentativeId()
+    {
+        return string.IsNullOrWhiteSpace(
+            _options.LegalRepresentativeId)
+            ? "[CÉDULA NO CONFIGURADA]"
+            : _options.LegalRepresentativeId.Trim();
+    }
+
+    private void SaveGeneratedDocument(
+        string fileName,
+        byte[] content)
+    {
         var outputDirectory = Path.Combine(
             _environment.ContentRootPath,
             _options.OutputDirectory);
@@ -184,11 +360,16 @@ public class DocumentService : IDocumentService
 
         File.WriteAllBytes(
             outputPath,
-            generatedBytes);
+            content);
+    }
 
+    private static GeneratedDocumentDto BuildGeneratedDocument(
+        byte[] content,
+        string fileName)
+    {
         return new GeneratedDocumentDto
         {
-            Content = generatedBytes,
+            Content = content,
             FileName = fileName,
             ContentType =
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -433,7 +614,9 @@ public class DocumentService : IDocumentService
             var combined =
                 string.Concat(
                     texts.Select(
-                        text => text.Text ?? string.Empty));
+                        text =>
+                            text.Text
+                            ?? string.Empty));
 
             var match =
                 regex.Match(combined);
@@ -596,6 +779,29 @@ public class DocumentService : IDocumentService
 
         return
             $"{date.Day} de {capitalizedMonth} del {date.Year}";
+    }
+
+    private static string FormatPagareHeaderDate(
+        DateTime date)
+    {
+        var months = new[]
+        {
+            "ENERO",
+            "FEBRERO",
+            "MARZO",
+            "ABRIL",
+            "MAYO",
+            "JUNIO",
+            "JULIO",
+            "AGOSTO",
+            "SEPTIEMBRE",
+            "OCTUBRE",
+            "NOVIEMBRE",
+            "DICIEMBRE"
+        };
+
+        return
+            $"{date.Day}, {months[date.Month - 1]}, {date.Year}";
     }
 
     private static string FormatCity(
