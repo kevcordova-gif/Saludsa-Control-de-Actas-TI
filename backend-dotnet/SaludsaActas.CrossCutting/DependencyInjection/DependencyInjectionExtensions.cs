@@ -47,7 +47,13 @@ public static class DependencyInjectionExtensions
         services.AddScoped<IEmpleadoService, EmpleadoService>();
         services.AddScoped<IActaService, ActaService>();
         services.AddScoped<IActaDraftService, ActaDraftService>();
+
+        // Documentos
         services.AddScoped<IDocumentService, DocumentService>();
+
+        services.AddScoped<
+            IDiscountDocumentService,
+            DiscountDocumentService>();
 
         // Active Directory
         services.AddScoped<
@@ -62,6 +68,10 @@ public static class DependencyInjectionExtensions
         services.AddScoped<
             IValidator<CreateActaDto>,
             CreateActaDtoValidator>();
+
+        services.AddScoped<
+            IValidator<CreateDiscountDocumentDto>,
+            CreateDiscountDocumentDtoValidator>();
 
         return services;
     }
